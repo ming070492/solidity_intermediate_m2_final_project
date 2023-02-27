@@ -3,11 +3,12 @@ import Image from 'next/image'
 import { Inter } from 'next/font/google'
 import styles from '@src/styles/Home.module.css'
 import { useState } from 'react'
+import { useEffect } from 'react'
 import {ethers} from "ethers";
 import contract_abi from '@src/src/artifacts/contracts/BankingContract.sol/BankingContract.json';
 const inter = Inter({ subsets: ['latin'] })
 
-const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const contractAddress = "0x0B306BF915C4d645ff596e518fAf3F9669b97016";
 const BankingContractAbi = contract_abi.abi;
 
 export default function Home() {
@@ -17,27 +18,24 @@ export default function Home() {
   const [connectedWallet, setIsConnectedWallet] = useState();
   const [contract, setContract] = useState();
   const [signer, setSigner] = useState();
+  const [currentBalance, setCurrentBalance] = useState();
 
-  
-     
   const connectMetamask = async() => {
-  
     if(typeof window.ethereum !== "undefined") {
       try {
         let wallet = await ethereum.request({ method: "eth_requestAccounts" });
         setIsConnectedWallet(wallet);
         setIsConnected(true);
         const connectedProvider = new ethers.providers.Web3Provider(window.ethereum);
-        const _signer = connectedProvider.getSigner();
+        const s = await connectedProvider.getSigner();
         setProvider(connectedProvider);
-        setSigner(_signer);
+        setSigner(s);
       } catch (e) {
         console.log(e);
       }
     }else{
       setIsConnected(false);
     }
-    await  callContract();
   }
 
   const callContract = async() => {
@@ -45,12 +43,30 @@ export default function Home() {
     setContract(bankingContract);
   }
 
+  const balanceInquiry = async() => {
+    setCurrentBalance((await contract.bal_inquiry()).toNumber());
+  } 
 
+  const deposit = async() => {
+    let amount = prompt("DEPOSIT AMOUNT:");
+    let dep = await contract.deposit(amount);
+    await dep.wait();
+    balanceInquiry();
+  }
 
-const balanceInquiry = async() => {
-  console.log(JSON.stringify(contract));
-  contract.bal_inquiry();
-} 
+  const withdraw = async() => {
+    let amount = prompt("WITHDRAW AMOUNT:");
+    let wit = await contract.withdraw(amount);
+    await wit.wait();
+    balanceInquiry();
+  }
+
+  useEffect(() => {
+    if(contract !== undefined) { 
+      balanceInquiry();
+    }
+  }, [contract]);
+
 
   return (
     <>
@@ -61,9 +77,21 @@ const balanceInquiry = async() => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className={styles.main}>
-        {!isConnected && <button onClick={connectMetamask}>CONNECT</button>}
-        {isConnected && <div><button disabled>CONNECTED</button>WALLET ADDRESS: {connectedWallet}</div>}
-        <button onClick={balanceInquiry}>TRY CONTRACT</button>
+        {!isConnected && <button className='button-connect-enabled' onClick={connectMetamask}>CONNECT</button>}
+        {isConnected && 
+            <div className='flex-div'>
+              <button className='button-connect-disabled' disabled>CONNECTED</button>
+              <span className='cont'><span className='label1'>WALLET ADDRESS:</span> {connectedWallet}</span>
+              {!contract && <button className='button-connect-enabled' onClick={callContract}>CONNECT SMART CONTRACT</button> }
+              {contract && 
+                <div id='div2' className='flex-div'>
+                <button className='button-connect-disabled' disabled>CONTRACT CONNECTED</button>
+                <span className='cont'><span className='label1'>BALANCE:</span> {currentBalance}</span>
+                <button className='button-connect-enabled' onClick={deposit}>DEPOSIT</button>
+                <button className='button-connect-enabled' onClick={withdraw}>WITHDRAW</button>
+                </div> }
+            </div>
+        }
       </main>
     </>
   )
