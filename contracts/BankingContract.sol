@@ -9,7 +9,7 @@ contract BankingContract {
     uint256 public balance = 0; 
 
     function  withdraw(uint256 _amount) external payable{
-        require(balance > _amount, "INSUFFICIENT BALANCE.");
+        require(balance >= _amount, "INSUFFICIENT BALANCE.");
         balance -= _amount;
     }
 

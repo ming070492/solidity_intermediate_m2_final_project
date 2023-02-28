@@ -8,7 +8,7 @@ import {ethers} from "ethers";
 import contract_abi from '@src/src/artifacts/contracts/BankingContract.sol/BankingContract.json';
 const inter = Inter({ subsets: ['latin'] })
 
-const contractAddress = "0x0B306BF915C4d645ff596e518fAf3F9669b97016";
+const contractAddress = "0x663F3ad617193148711d28f5334eE4Ed07016602";
 const BankingContractAbi = contract_abi.abi;
 
 export default function Home() {
@@ -55,10 +55,14 @@ export default function Home() {
   }
 
   const withdraw = async() => {
-    let amount = prompt("WITHDRAW AMOUNT:");
-    let wit = await contract.withdraw(amount);
-    await wit.wait();
-    balanceInquiry();
+    try {
+      let amount = prompt("WITHDRAW AMOUNT:");
+      let wit = await contract.withdraw(amount);
+      await wit.wait();
+      balanceInquiry();
+    } catch (e) {
+      alert("Unable to withdraw.");
+    }
   }
 
   useEffect(() => {
